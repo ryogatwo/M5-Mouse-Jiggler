@@ -1,8 +1,9 @@
 // ------------------------
 // bluetooth mouse Jiggler
-// V1.1e  fixed battery transmit disconnect issue
+// V1.1f  fixed battery transmit disconnect issue
 //        added clock set function
 //        added AM/PM display
+//        added C/F temperature option
 // for M5 STICK C PLUS 1.1
 // ------------------------
 
@@ -27,6 +28,14 @@ String  clockstr        = " ";
 byte    counter         = 0;
 
 RTC_TimeTypeDef TimeStruct;
+
+// -----------------------------------------------------------------------------
+// Temperature display option
+//
+// false = Celsius
+// true  = Fahrenheit
+// -----------------------------------------------------------------------------
+const bool TEMP_IN_FAHRENHEIT = false;
 
 // -----------------------------------------------------------------------------
 // Battery update control
@@ -82,6 +91,35 @@ String twoDigits(byte value) {
   }
 
   return String(value);
+}
+
+// -----------------------------------------------------------------------------
+// Round a float to the nearest whole number.
+// Avoids needing extra math includes.
+// -----------------------------------------------------------------------------
+int roundToInt(float value) {
+  if (value >= 0) {
+    return int(value + 0.5);
+  } else {
+    return int(value - 0.5);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Get formatted temperature text for LCD line 5.
+//
+// M5.Axp.GetTempInAXP192() returns Celsius.
+// If TEMP_IN_FAHRENHEIT is true, convert C to F for display.
+// -----------------------------------------------------------------------------
+String getTemperatureDisplay() {
+  float tempC = M5.Axp.GetTempInAXP192();
+
+  if (TEMP_IN_FAHRENHEIT) {
+    float tempF = (tempC * 9.0 / 5.0) + 32.0;
+    return String("Temp: ") + String(roundToInt(tempF)) + String("F");
+  }
+
+  return String("Temp: ") + String(roundToInt(tempC)) + String("C");
 }
 
 // -----------------------------------------------------------------------------
@@ -211,7 +249,7 @@ void setup() {
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextSize(2);
 
-  writeText(" Mouse Jig v1.1e", ORANGE, 0);
+  writeText(" Mouse Jig v1.1f", ORANGE, 0);
 
   // ---------------------------------------------------------------------------
   // OPTIONAL: Set the clock here.
@@ -225,7 +263,6 @@ void setup() {
 
   // setClock24Hour(9, 5, 0);         // 9:05:00 AM
   // setClock24Hour(21, 5, 0);        // 9:05:00 PM
-  // setClock24Hour(7, 55, 0);        // 9:05:00 PM
 }
 
 void loop() {
@@ -327,14 +364,20 @@ void loop() {
 
   // ---------------------------------------------------------------------------
   // Show temp on line 5.
+  //
+  // Controlled by:
+  //   const bool TEMP_IN_FAHRENHEIT = false;
+  //
+  // false = Celsius
+  // true  = Fahrenheit
   // ---------------------------------------------------------------------------
-  tmstr = String("Temp: ") + String(int(trunc(M5.Axp.GetTempInAXP192()))) + String("C");
+  tmstr = getTemperatureDisplay();
   writeText(tmstr, BLUE, 5);
 
   // ---------------------------------------------------------------------------
   // Show clock on line 6.
   //
-  // Clock now displays AM/PM.
+  // Clock displays AM/PM.
   // Example:
   //   Time: 9:04:07 PM
   // ---------------------------------------------------------------------------
