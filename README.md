@@ -468,4 +468,3 @@ MOVING mouse
 
 This project is intended for personal use, testing, and learning with the M5StickC Plus and ESP32 BLE HID functionality.
 
-Use responsibly and follow your workplace policies.
